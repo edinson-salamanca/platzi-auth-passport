@@ -13,10 +13,17 @@ const moviesApi = (app) => {
 
   const validationHandler = require('../utils/middleware/validationHandler');
   const buildMessage = require('../utils/buildMessage');
+  const cacheResponse = require('../utils/cacheResponse');
+  const {
+    FIVE_MINUTES_IN_SECONDS,
+    SIXTY_MINUTES_IN_SECONDS,
+  } = require('../utils/time');
 
   app.use('/api/movies', router);
 
   router.get('/', async function (req, res, next) {
+    cacheResponse(res, FIVE_MINUTES_IN_SECONDS);
+
     const { tags } = req.query;
 
     try {
@@ -35,6 +42,8 @@ const moviesApi = (app) => {
     '/:movieId',
     validationHandler({ movieId: movieIdSchema }, 'params'),
     async function (req, res, next) {
+      cacheResponse(res, SIXTY_MINUTES_IN_SECONDS);
+
       const { movieId } = req.params;
 
       try {
@@ -50,23 +59,23 @@ const moviesApi = (app) => {
     }
   );
 
-  router.post('/', validationHandler(createMovieSchema), async function (
-    req,
-    res,
-    next
-  ) {
-    const { body: movie } = req;
-    try {
-      const createdMovieId = await moviesService.createMovie({ movie });
+  router.post(
+    '/',
+    validationHandler(createMovieSchema),
+    async function (req, res, next) {
+      const { body: movie } = req;
+      try {
+        const createdMovieId = await moviesService.createMovie({ movie });
 
-      res.status(201).json({
-        data: createdMovieId,
-        message: buildMessage('movie', 'create'),
-      });
-    } catch (err) {
-      next(err);
+        res.status(201).json({
+          data: createdMovieId,
+          message: buildMessage('movie', 'create'),
+        });
+      } catch (err) {
+        next(err);
+      }
     }
-  });
+  );
 
   // update
   router.put(
@@ -78,7 +87,10 @@ const moviesApi = (app) => {
       const { body: movie } = req;
 
       try {
-        const updateMovieId = await moviesService.updateMovie({ movieId, movie });
+        const updateMovieId = await moviesService.updateMovie({
+          movieId,
+          movie,
+        });
 
         res.status(200).json({
           data: updateMovieId,
@@ -104,7 +116,7 @@ const moviesApi = (app) => {
   //   } catch (err) {
   //     next(err);
   //   }
-  // }); 
+  // });
 
   router.delete(
     '/:movieId',
