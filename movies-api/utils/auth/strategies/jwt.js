@@ -8,7 +8,7 @@ const { config } = require('../../../config');
 passport.use(
   new Strategy(
     {
-      secretOrkey: config.authJwtSecret,
+      secretOrKey: config.authJwtSecret,
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
     },
     async function (tokenPayload, cb) {
